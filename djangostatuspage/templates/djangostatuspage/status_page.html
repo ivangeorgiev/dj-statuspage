@@ -1,0 +1,239 @@
+{% extends 'djangostatuspage/base.html' %}
+
+{% block content %}
+  <div class="container">
+      <div class="row">
+        <div class="col-md-12">
+          <h1 id="statuspage-title">Status Page</h1>
+          <div id="statuspage-description"></div>
+        </div>
+      </div>
+      <div class="row clearfix">
+          <div class="col-md-12 column">
+              <div class="panel panel-success" id="statuspage-heading-box">
+                <div class="panel-heading">
+                  <h3 class="panel-title">
+                    <span id="statuspage-heading-title">Not All Systems Operational</span>
+                    <small class="pull-right"><span id="statuspage-last-refreshed">Refreshed 39 minutes ago</span></small>
+                  </h3>
+                </div>                
+              </div>
+
+              <div class="row clearfix" id="statuspage-spinner">
+                <div class="col-md-12 column text-center">
+                  <div class="fa-3x" style="color: blue;">
+                    {% comment %} <i class="fas fa-spinner fa-spin"></i>
+                    <i class="fas fa-circle-notch fa-spin"></i> {% endcomment %}
+                    <i class="fas fa-sync fa-spin"></i>
+                    {% comment %} <i class="fas fa-cog fa-spin"></i>
+                    <i class="fas fa-spinner fa-pulse"></i>
+                    <i class="fas fa-stroopwafel fa-spin"></i> {% endcomment %}
+                  </div>
+                </div>
+              </div>
+
+              <div class="row clearfix">
+                  <div class="col-md-12 column">
+                      <div id="statuspage-systems" class="list-group">
+                      </div>
+                  </div>
+              </div>
+
+              <div id="statuspage-categories" class="row clearfix">
+                  <div class="col-md-12 column">
+                    <h2>Category</h2>
+                  </div>
+                  <div class="col-md-12 column">
+                      <div class="list-group">
+                        
+                          <div class="list-group-item">
+                              <h4 class="list-group-item-heading">
+                                  Website and API 
+                                  <a href="#"  data-toggle="tooltip" data-placement="bottom" title="Access website and use site API">
+                                    <i class="fa fa-question-circle"></i>
+                                  </a>
+                              </h4>
+                              <p class="list-group-item-text">
+                                  <span class="label label-danger">Not Operational</span>
+                              </p>
+                          </div>
+                        
+                          <div class="list-group-item">
+                              <h4 class="list-group-item-heading">
+                                  SSH 
+                                  <a href="#"  data-toggle="tooltip" data-placement="bottom" title="Access site using SSH terminal">
+                                    <i class="fa fa-question-circle"></i>
+                                  </a>
+                              </h4>
+                              <p class="list-group-item-text">
+                                  <span class="label label-success">Operational</span>
+                              </p>
+                          </div>
+                        
+                          <div class="list-group-item">
+                              <h4 class="list-group-item-heading">
+                                  Database Server 
+                                  <a href="#"  data-toggle="tooltip" data-placement="bottom" title="Access database server and execute queries">
+                                    <i class="fa fa-question-circle"></i>
+                                  </a>
+                              </h4>
+                              <p class="list-group-item-text">
+                                  <span class="label label-success">Operational</span>
+                              </p>
+                          </div>
+                          
+                      </div>
+                  </div>
+              </div>
+          </div>
+      </div>
+  </div>
+  
+<script>
+const statusPageTitleBox = document.getElementById('statuspage-title')
+const statusPageDescriptionBox = document.getElementById('statuspage-description')
+const statusPageSpinnerBox = document.getElementById('statuspage-spinner')
+const statusPageSystemsListBox = document.getElementById('statuspage-systems')
+const statusPageCategoriesBox = document.getElementById('statuspage-categories') 
+const statusPageHeadingBox = document.getElementById('statuspage-heading-box')
+const statusPageHeadingTitleBox = document.getElementById('statuspage-heading-title')
+const statusPageLastRefreshedBox = document.getElementById('statuspage-last-refreshed')
+
+let lastRefreshedAt = null
+statusPageCategoriesBox.outerHTML = ''
+
+const update_last_refreshed = () => {
+  let now = new Date()
+  let agoMs = now - lastRefreshedAt
+  let agoMinutes = Math.floor(agoMs / 60000)
+  let agoSeconds = Math.floor((now-lastRefreshedAt)/1000)
+  let updateInterval = 5000
+  if (agoSeconds < 10) {
+    statusPageLastRefreshedBox.textContent = `refreshed just now`
+  } else if (agoMinutes < 1) {
+    statusPageLastRefreshedBox.textContent = `refreshed ${agoSeconds} seconds ago`
+  } else if (agoMinutes < 2) {
+    statusPageLastRefreshedBox.textContent = `refreshed ${agoMinutes} minute ${Math.floor(agoSeconds % 60)} seconds ago`
+  } else {
+    statusPageLastRefreshedBox.textContent = `refreshed ${agoMinutes} minutes ago`
+    updateInterval = 30000
+  }
+  setTimeout(update_last_refreshed, updateInterval)
+}
+
+const get_status = () => {
+  statusPageSpinnerBox.classList.remove('not-visible')
+  $.ajax({
+    type: 'GET',
+    url: '{{ url_get_current_status_page }}',
+    success: resp => {
+      console.log(resp)
+      lastRefreshedAt = new Date()
+      let issueCount = {
+        outage:0,
+        degraded:0,
+        minor: 0
+      }
+      let numOutages = 0
+      let numDegraded = 0
+      let numMinor = 0
+
+      const addSystem = (system, box1) => {
+        let base_box_id = 'statuspage-systems'
+        let box_id = base_box_id + (system.parent_id ? ('-' + system.parent_id) : '')
+        let box = document.getElementById(box_id)
+        if ( !box ) {
+          box = document.getElementById(base_box_id)
+        }
+        console.log(box)
+        issues = system.open_issues.with_subsystems
+        severity_map = {
+          'Minor': {
+            property: 'minor',
+            class: 'success'
+          },
+          'Degraded': {
+            property: 'degraded',
+            class: 'warning'
+          },
+          'Outage': {
+            property: 'outage',
+            class: 'danger'
+          }
+        }
+        let systemStatusClass = 'success'
+        let systemStatus = 'Operational'
+        for (const severity in severity_map) {
+          map = severity_map[severity]
+          if ( (severity in issues.by_severity) && (issues.by_severity[severity].count > 0) ) {
+            issueCount[map.property] += issues.by_severity[severity].count
+            systemStatus = issues.by_severity[severity].label
+            systemStatusClass = map.class
+          }
+        }
+
+        box.innerHTML += `
+          <div class="list-group-item">
+              <h4 class="list-group-item-heading">
+                  ${system.name}
+                  <a href="#" data-toggle="tooltip" data-placement="bottom" title="${system.description ? system.description : system.name}">
+                    <i class="fa fa-question-circle"></i>
+                  </a>
+              </h4>
+              <p class="list-group-item-text">
+                  <span class="label label-${systemStatusClass}">${systemStatus}</span>
+              </p>
+              <div id="statuspage-systems-${system.id}" class="list-group not-visible">
+              </div>
+          </div>
+        `
+        box.classList.remove('not-visible')
+
+
+        console.log(systemStatusClass)
+
+      }
+
+      statusPageTitleBox.textContent = resp.name
+      statusPageDescriptionBox.innerHTML = resp.description
+      statusPageSystemsListBox.innerHTML = ''
+      resp.systems.forEach(system => {
+        addSystem(system, statusPageSystemsListBox)
+      })
+
+      statusPageHeadingBox.classList.remove('panel-success')
+      statusPageHeadingBox.classList.remove('panel-warning')
+      statusPageHeadingBox.classList.remove('panel-danger')
+
+      if (issueCount.outage > 0) {
+        statusPageHeadingBox.classList.add('panel-danger')
+        statusPageHeadingTitleBox.textContent = 'Not All Systems Operational'
+      } else if (issueCount.degraded > 0) {
+        statusPageHeadingBox.classList.add('panel-warning')
+        statusPageHeadingTitleBox.textContent = 'Some Systems with Degraded Performance'
+      } else {
+        statusPageHeadingBox.classList.add('panel-success')
+        statusPageHeadingTitleBox.textContent = 'All Systems Operational'
+      }
+      
+      update_last_refreshed()
+
+      {% if auto_refresh_interval > 0 %}
+        setTimeout(get_status, {{ auto_refresh_interval }})
+      {% endif %}
+      setTimeout( () => {
+        statusPageSpinnerBox.classList.add('not-visible')
+      }, 200)
+      
+    },
+    error: err => {
+      console.error(err)
+      statusPageSpinnerBox.classList.add('not-visible')
+    }
+  })
+
+}
+get_status()
+</script>
+
+{% endblock content %}
