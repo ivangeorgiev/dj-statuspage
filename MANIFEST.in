@@ -1,6 +1,6 @@
 include LICENSE
 include README.rst
 include requirements.txt
-recursive-include polls/static *
-recursive-include polls/templates *
+recursive-include djangostatuspage/**/static *
+recursive-include djangostatuspage/**/templates *
 recursive-include docs *
