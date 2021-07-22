@@ -46,7 +46,6 @@ Build and Publish
 ------------------
 
 .. code-block:: bash
-    :linenos:
 
     $ python setup.py sdist 
     $ python -m pip install --upgrade twine
