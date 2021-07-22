@@ -1,29 +1,44 @@
-=====
-Polls
-=====
+==================
+Django Status Page
+==================
 
-Polls is a Django app to conduct Web-based polls. For each question,
-visitors can choose between a fixed number of answers.
-
-Detailed documentation is in the "docs" directory.
+Django Status Page is a Django plugin which allows you to easily embed status pages into your Django project.
 
 Quick start
 -----------
+1. Install python packages::
 
-1. Add "polls" to your INSTALLED_APPS setting like this::
+    pip install djangostatuspage
+
+   This will install the plugin and all dependency packages, e.g. Django REST Framework.
+
+1. Add "rest_framework" and "djangostatuspage" to your INSTALLED_APPS setting (``settings.py``) like this::
 
     INSTALLED_APPS = [
         ...
-        'polls',
+        'rest_framework',
+        'djangostatuspage',
     ]
 
-2. Include the polls URLconf in your project urls.py like this::
+2. Include the API URLconf in your project ``urls.py`` like this::
 
-    path('polls/', include('polls.urls')),
+    path('api/statuspage/', include('djangostatuspage.urls')),
 
-3. Run ``python manage.py migrate`` to create the polls models.
+3. Include the UI URLconf in your project ``urls.py`` like this::
 
-4. Start the development server and visit http://127.0.0.1:8000/admin/
-   to create a poll (you'll need the Admin app enabled).
+    path('ui/', include('djangostatuspage-ui.urls_ui')),
 
-5. Visit http://127.0.0.1:8000/polls/ to participate in the poll.
+3. Run ``python manage.py migrate`` to create the Status Page models.
+
+4. Start the development server::
+
+    python manage.py runserver
+
+5. To manage your Status Pages, visit the Django Admin at http://127.0.0.1:8000/admin/
+   (you'll need the Admin app enabled and superuser created).
+
+6. To view actual status page, visit http://127.0.0.1:8000/ui/status-pages/(status-page-id)/
+
+7. Status page API endpoints are available at: http://127.0.0.1:8000/api/statuspage/
+
+
