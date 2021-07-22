@@ -35,7 +35,7 @@ class StatusPageView(generics.RetrieveAPIView):
 def view_status_page_ui(request, pk):
   current_namespace = request.resolver_match.namespace
   context = {
-    'url_get_current_status_page':  reverse(f'{current_namespace}:status-page', kwargs={'pk':pk}),
+    'url_get_current_status_page':  reverse(f'djangostatuspage:status-page', kwargs={'pk':pk}),
     'status_page_id': pk,
     'auto_refresh_interval': 300000,
   }
