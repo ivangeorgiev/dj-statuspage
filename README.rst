@@ -42,6 +42,17 @@ Quick start
 7. Status page API endpoints are available at: http://127.0.0.1:8000/api/statuspage/
 
 
+Customization
+-------------
+
+Add ``DJANGOSTATUSPAGE`` dictionary to your project's ``settings.py``:
+
+.. code-block:: python
+
+    DJANGOSTATUSPAGE = {
+        'UI_TEMPLATE': 'djangostatuspage/status_page.html',
+    }
+
 Build and Publish
 ------------------
 
