@@ -42,3 +42,14 @@ Quick start
 7. Status page API endpoints are available at: http://127.0.0.1:8000/api/statuspage/
 
 
+Build and Publish
+------------------
+
+.. code-block:: bash
+    :linenos:
+
+    $ python setup.py sdist 
+    $ python -m pip install --upgrade twine
+    $ python -m twine upload dist/*
+
+
